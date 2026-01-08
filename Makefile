@@ -21,7 +21,7 @@ save-brain:
 	@echo "🧠 Sauvegarde Stealth vers Guesdon-Brain..."
 	@mkdir -p "/Users/daminou/Dev/Guesdon-Brain/Formation_IA/Projet_8/credit-scoring-app"
 	@cp GEMINI.md "/Users/daminou/Dev/Guesdon-Brain/Formation_IA/Projet_8/credit-scoring-app/" 2>/dev/null || true
-	@cp -r specs/ "/Users/daminou/Dev/Guesdon-Brain/Formation_IA/Projet_8/credit-scoring-app/specs/" 2>/dev/null || true
-	@# On sauvegarde aussi la config BMAD locale (agents custom)
+	 @cp SESSION_LOG.md "/Users/daminou/Dev/Guesdon-Brain/Formation_IA/Projet_8/credit-scoring-app/" 2>/dev/null || true
+	       @cp -r specs/ "/Users/daminou/Dev/Guesdon-Brain/Formation_IA/Projet_8/credit-scoring-app/specs/" 2>/dev/null || true	@# On sauvegarde aussi la config BMAD locale (agents custom)
 	@cp -r _bmad/ "/Users/daminou/Dev/Guesdon-Brain/Formation_IA/Projet_8/credit-scoring-app/_bmad/" 2>/dev/null || true
 	 @cd "/Users/daminou/Dev/Guesdon-Brain" && git add . && (git commit -m "Backup: credit-scoring-app" || true) && git push origin main && echo "✅ Brain Synced!"

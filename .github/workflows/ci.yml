@@ -2,16 +2,20 @@ name: Credit-Scoring-CI
 
 on:
   push:
-    branches: [ "main", "test" ]
+    branches: [ "**" ]
   pull_request:
     branches: [ "main", "test" ]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     defaults:
       run:
-        shell: bash -el {0}  # Essential for Conda activation
+        shell: bash -el {0}
 
     steps:
     - uses: actions/checkout@v4
@@ -40,4 +44,10 @@ jobs:
 
     - name: Run Tests with Coverage
       run: |
-        pytest --cov=src --cov-fail-under=70
+        pytest --cov=src --cov-report=html --cov-fail-under=70
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: htmlcov

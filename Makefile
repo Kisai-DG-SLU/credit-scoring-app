@@ -1,13 +1,30 @@
-.PHONY: install test run view
+.PHONY: install test lint format run-api clean rotate-logs
 
-install:
-	pip install -r requirements.txt
+# --- Maintenance ---
+rotate-logs:
+	@./scripts/rotate_logs.sh
 
-test:
-	pytest tests/
+# --- Installation & Setup ---
+install: rotate-logs
+	conda env update --file environment.yml --prune
 
-run:
-	python src/main.py
+# --- Development ---
+lint: rotate-logs
+	ruff check .
+	black --check .
 
-view:
-	grip docs/ -b
+format: rotate-logs
+	black .
+	ruff check . --fix
+
+test: rotate-logs
+	pytest --cov=src --cov-report=term-missing --cov-report=html
+
+# --- Execution ---
+run-api: rotate-logs
+	uvicorn src.api.main:app --reload
+
+# --- Cleanup ---
+clean:
+	rm -rf __pycache__ .pytest_cache .ruff_cache coverage.html
+	find . -type d -name "__pycache__" -exec rm -rf {} +

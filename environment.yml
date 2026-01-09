@@ -1,0 +1,35 @@
+name: credit-scoring-app
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  # Core Data Science
+  - numpy<1.27
+  - pandas
+  - scikit-learn
+  - lightgbm
+  - joblib
+  - shap
+  - numba=0.59.1
+  - llvmlite=0.42.0
+  # API & Web
+  - fastapi
+  - uvicorn
+  - pydantic
+  - requests
+  - python-dotenv
+  - streamlit
+  # Monitoring
+  - evidently
+  # Dev Tools & Testing
+  - pytest
+  - pytest-cov
+  - black
+  - ruff
+  - pre-commit
+  - python-semantic-release
+  - pip:
+    # Packages potentiellement non trouvés ou versions spécifiques si besoin
+    # (Liste vide pour l'instant car tout semble dispo sur conda-forge)

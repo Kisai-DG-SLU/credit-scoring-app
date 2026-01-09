@@ -8,6 +8,7 @@ import pandas as pd
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class ModelLoader:
     _instance = None
     _model = None
@@ -43,17 +44,17 @@ class ModelLoader:
             query = "SELECT * FROM clients WHERE SK_ID_CURR = ?"
             df = pd.read_sql_query(query, conn, params=(client_id,))
             conn.close()
-            
+
             if df.empty:
                 logger.warning(f"Client {client_id} non trouvé dans la base.")
                 return None
-            
+
             # Conversion des colonnes en numérique pour éviter les erreurs de type 'object'
             # (Certaines colonnes peuvent contenir des chaînes vides ou None converties en object par SQLite)
             for col in df.columns:
-                if col not in ['SK_ID_CURR', 'TARGET']:
-                    df[col] = pd.to_numeric(df[col], errors='coerce')
-            
+                if col not in ["SK_ID_CURR", "TARGET"]:
+                    df[col] = pd.to_numeric(df[col], errors="coerce")
+
             return df
         except Exception as e:
             logger.error(f"Erreur lors de la lecture de la base SQLite : {e}")
@@ -64,6 +65,7 @@ class ModelLoader:
         if self._model is None:
             self.load_artifacts()
         return self._model
+
 
 # Instance globale pour accès facile
 loader = ModelLoader()

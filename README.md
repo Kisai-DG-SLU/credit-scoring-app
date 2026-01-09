@@ -1,98 +1,104 @@
 # Prêt à dépenser (Credit Scoring App)
 
 ![CI](https://github.com/Kisai-DG-SLU/credit-scoring-app/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)
 ![Release](https://img.shields.io/github/v/release/Kisai-DG-SLU/credit-scoring-app)
 ![Python](https://img.shields.io/badge/python-3.10-blue)
 ![License](https://img.shields.io/github/license/Kisai-DG-SLU/credit-scoring-app)
 
-Application d'évaluation du risque de crédit ("Credit Scoring") permettant de prédire la probabilité de faillite d'un client. Ce projet s'inscrit dans le cadre d'une démarche MLOps complète, intégrant le développement d'une API, d'un Dashboard interactif, et l'industrialisation via CI/CD.
+> **Projet 7/8 - Parcours Data Scientist OpenClassrooms**
+>
+> Application d'évaluation du risque de crédit ("Credit Scoring") permettant de prédire la probabilité de défaut de paiement d'un client. Ce projet implémente une approche **MLOps** rigoureuse, de l'optimisation des données au déploiement d'une API conteneurisée.
+
+---
+
+## ⚡ Points Forts Techniques
+
+- **Performance Backend** : API développée avec **FastAPI** pour une exécution asynchrone et rapide.
+- **Optimisation Données** : Migration des datasets CSV (> 1 Go) vers **SQLite** avec indexation, réduisant drastiquement l'empreinte mémoire lors de l'inférence.
+- **Qualité Code** : Pipeline CI strict refusant tout code non formaté (Black/Ruff) ou sous 70% de couverture de tests.
+- **Architecture Modulaire** : Séparation claire entre `Data`, `Model` et `API` (Clean Architecture simplifiée).
 
 ## 🏗 Architecture
 
-Le projet est structuré pour optimiser la performance et la maintenabilité :
+Le projet est structuré selon les standards industriels :
 
-- **Backend (API)** : Développé avec **FastAPI**, exposant un endpoint de prédiction.
-- **Frontend (Dashboard)** : Interface interactive réalisée avec **Streamlit** (en cours de développement).
-- **Données** : Migration des fichiers plats (CSV) vers **SQLite** pour réduire l'empreinte mémoire et accélérer les requêtes via indexation.
-- **Environnement** : Gestion stricte des dépendances via **Conda**.
+```
+.
+├── src/
+│   ├── api/          # Application FastAPI (Entrées/Sorties, Validation Pydantic)
+│   ├── data/         # Gestion des données (Conversion CSV -> SQLite)
+│   ├── model/        # Logique métier (Chargement modèle, Preprocessing, Prédiction)
+│   └── dashboard/    # (À venir) Interface Streamlit
+├── tests/            # Tests unitaires (Pytest) couvrant > 90% du code
+├── specs/            # Documentation technique et fonctionnelle
+└── .github/          # Workflows CI/CD (Tests, Release)
+```
 
 ## 🚀 Installation
 
-Ce projet nécessite **Python 3.10** et **Conda**.
+Pré-requis : **Conda** (Miniconda recommandé).
 
-1. **Cloner le dépôt** :
+1. **Cloner le dépôt**
    ```bash
    git clone git@github.com:Kisai-DG-SLU/credit-scoring-app.git
    cd credit-scoring-app
    ```
 
-2. **Créer l'environnement Conda** :
-   L'environnement est défini dans `environment.yml`.
+2. **Installer l'environnement**
+   L'environnement est strictement défini dans `environment.yml`.
    ```bash
    make install
-   # Ou manuellement : conda env update --file environment.yml --prune
+   ```
+   *Cela créera l'environnement `credit-scoring-app` et installera toutes les dépendances.*
+
+3. **Activer l'environnement**
+   ```bash
+   conda activate credit-scoring-app
    ```
 
-3. **Activer l'environnement** :
+4. **Configurer les Hooks Git (Qualité)**
+   Pour garantir la qualité avant chaque commit :
    ```bash
-   conda activate credit-scoring
+   pre-commit install
    ```
 
 ## 🛠 Utilisation
 
 ### Démarrer l'API
-L'API expose le modèle de scoring.
+Le serveur de développement se lance avec rechargement automatique :
 
 ```bash
 make run-api
 ```
-L'API sera accessible sur `http://localhost:8000`.
-Documentation interactive (Swagger UI) disponible sur `http://localhost:8000/docs`.
+- **API Root** : `http://localhost:8000`
+- **Documentation Swagger** : `http://localhost:8000/docs`
 
-### Tests et Qualité
+### Commandes de Développement (Makefile)
 
-Le projet intègre une suite de tests et des outils de linting pour garantir la qualité du code.
+Un `Makefile` est à votre disposition pour automatiser les tâches courantes :
 
-- **Lancer les tests** (avec rapport de couverture) :
-  ```bash
-  make test
-  ```
+| Commande | Description |
+| :--- | :--- |
+| `make test` | Lance la suite de tests avec rapport de couverture |
+| `make lint` | Vérifie le style du code (Ruff, Black) |
+| `make format` | Reformate automatiquement le code |
+| `make install` | Met à jour l'environnement Conda |
+| `clean` | Nettoie les fichiers temporaires et caches |
 
-- **Vérifier le style (Linting)** :
-  ```bash
-  make lint
-  ```
+## 🧪 Tests & Qualité
 
-- **Formater le code** :
-  ```bash
-  make format
-  ```
+La qualité est au cœur de ce projet. Une couverture de code minimale de **70%** est imposée par la CI.
 
-## ⚙️ CI/CD
+Actuellement, le projet atteint : **92% de couverture**.
 
-Le workflow GitHub Actions (`ci.yml`) automatise :
-1.  L'installation de l'environnement.
-2.  Le linting (`ruff`, `black`).
-3.  Les tests unitaires (`pytest`).
-4.  La publication des releases (Semantic Release) lors des merges sur `main`.
-
-## 📦 Structure du Projet
-
-```
-.
-├── src/
-│   ├── api/          # Application FastAPI
-│   ├── data/         # Scripts de gestion des données (CSV -> SQLite)
-│   ├── model/        # Chargement du modèle et feature engineering
-│   └── dashboard/    # (À venir) Application Streamlit
-├── tests/            # Tests unitaires et d'intégration
-├── specs/            # Spécifications fonctionnelles et techniques
-├── environment.yml   # Définition de l'environnement Conda
-├── Makefile          # Commandes d'automatisation
-└── README.md         # Documentation du projet
+Pour générer le rapport localement :
+```bash
+make test
+# Ouvrir htmlcov/index.html pour le détail
 ```
 
 ## 👤 Auteur
 
 **Damien Guesdon**
-Projet réalisé dans le cadre de la formation "Data Scientist" (OpenClassrooms - Projet 7/8).
+*Projet réalisé dans le cadre de la formation OpenClassrooms.*

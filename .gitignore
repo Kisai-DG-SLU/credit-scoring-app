@@ -5,5 +5,22 @@ __pycache__/
 .DS_Store
 .coverage
 htmlcov/
+coverage.xml
 data/
 _bmad-output/
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/

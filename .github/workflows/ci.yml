@@ -1,0 +1,43 @@
+name: Credit-Scoring-CI
+
+on:
+  push:
+    branches: [ "main", "test" ]
+  pull_request:
+    branches: [ "main", "test" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}  # Essential for Conda activation
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+        python-version: 3.10
+        environment-file: environment.yml
+        activate-environment: credit-scoring-app
+        auto-activate-base: false
+
+    - name: Verify Environment
+      run: |
+        conda info
+        conda list
+
+    - name: Lint with Ruff
+      run: |
+        ruff check src tests
+
+    - name: Check Formatting with Black
+      run: |
+        black --check src tests
+
+    - name: Run Tests with Coverage
+      run: |
+        pytest --cov=src --cov-fail-under=70

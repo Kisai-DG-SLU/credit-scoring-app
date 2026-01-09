@@ -1,0 +1,29 @@
+[tool.semantic_release]
+version_variable = [
+    "src/__init__.py:__version__",
+]
+version_toml = [
+    "pyproject.toml:project.version",
+]
+branch = "main"
+upload_to_pypi = false
+upload_to_release = true
+build_command = false
+commit_message = "chore(release): {version} [skip ci]"
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[project]
+name = "credit-scoring-app"
+version = "0.1.0"
+description = "Credit Scoring API & Dashboard"
+authors = [
+    {name = "Damien Guesdon", email = "damien@example.com"},
+]
+requires-python = ">=3.10"

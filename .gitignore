@@ -23,4 +23,5 @@ build/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
-.ipynb_checkpoints/
+.ipynb_checkpoints/api.log
+docker_build.log

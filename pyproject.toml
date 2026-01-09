@@ -27,3 +27,14 @@ authors = [
     {name = "Damien Guesdon", email = "damien@example.com"},
 ]
 requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+addopts = "--cov=src --cov-fail-under=70"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+omit = [
+    "src/data/convert_to_sqlite.py",
+    "src/model/preprocessing.py",
+]
+

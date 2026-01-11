@@ -5,9 +5,6 @@ from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
 import pandas as pd
 
-# On doit définir les variables d'env AVANT d'importer l'app si elles sont utilisées au niveau module
-# Mais ici DB_FILE est défini dans le module. On va le patcher.
-
 from src.api.main import app
 from src.data.db_utils import init_logs_db
 
@@ -15,36 +12,17 @@ TEST_DB_FILE = "test_api_logs.sqlite"
 
 
 @pytest.fixture
-def client():
-    # Setup : Patcher DB_FILE dans main et initialiser la DB de test
-    with patch("src.api.main.DB_FILE", TEST_DB_FILE):
-        if os.path.exists(TEST_DB_FILE):
-            os.remove(TEST_DB_FILE)
-
-        # On force l'init de la DB car le startup event peut ne pas être déclenché par TestClient de la même façon
-        # ou on veut être sûr de l'état
-        init_logs_db(TEST_DB_FILE)
-
-        with TestClient(app) as c:
-            yield c
-
-    # Teardown
-    if os.path.exists(TEST_DB_FILE):
-        os.remove(TEST_DB_FILE)
-
-
-@pytest.fixture
 def mock_loader():
+    """Mock global du loader pour les tests de monitoring."""
     with patch("src.api.main.loader") as mock:
+        mock.db_path = TEST_DB_FILE
+
         # Mock du modèle
         mock_model = MagicMock()
-        mock_model.predict_proba.return_value = [
-            [0.8, 0.2]
-        ]  # Prob défaut = 0.2 -> Accordé
+        mock_model.predict_proba.return_value = [[0.8, 0.2]]
         mock.model = mock_model
 
         # Mock des données client
-        # On doit retourner un DataFrame avec les colonnes attendues
         features_data = {
             "SK_ID_CURR": [123],
             "TARGET": [0],
@@ -60,13 +38,26 @@ def mock_loader():
             "DAYS_REGISTRATION": [-500],
         }
         mock.get_client_data.return_value = pd.DataFrame(features_data)
-
         yield mock
+
+
+@pytest.fixture
+def client(mock_loader):
+    """Client de test configuré avec le mock_loader."""
+    if os.path.exists(TEST_DB_FILE):
+        os.remove(TEST_DB_FILE)
+
+    init_logs_db(TEST_DB_FILE)
+
+    with TestClient(app) as c:
+        yield c
+
+    if os.path.exists(TEST_DB_FILE):
+        os.remove(TEST_DB_FILE)
 
 
 def test_predict_logs_to_db(client, mock_loader):
     """Vérifie que l'appel à /predict enregistre bien dans la BDD."""
-
     response = client.get("/predict/123")
     assert response.status_code == 200
 
@@ -78,10 +69,6 @@ def test_predict_logs_to_db(client, mock_loader):
     conn.close()
 
     assert row is not None
-    # row[2] = score (0.2), row[3] = decision ("Accordé")
     assert abs(row[2] - 0.2) < 0.001
     assert row[3] == "Accordé"
-    # Vérif feature EXT_SOURCE_1 (colonne 5 normalement, après id, client_id, score, decision, timestamp)
-    # Les colonnes sont id, client_id, score, decision, timestamp, EXT1, EXT2...
-    # Donc EXT1 est à l'index 5
     assert abs(row[5] - 0.5) < 0.001

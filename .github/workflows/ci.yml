@@ -6,19 +6,23 @@ on:
   pull_request:
     branches: [ "main", "test" ]
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   ci:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
+    outputs:
+      should_merge: ${{ steps.check_merge.outputs.should_merge }}
     defaults:
       run:
         shell: bash -el {0}
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Miniconda
       uses: conda-incubator/setup-miniconda@v3
@@ -50,3 +54,48 @@ jobs:
       with:
         name: coverage-report
         path: htmlcov
+
+    - name: Check if merge required
+      id: check_merge
+      run: |
+        if [[ "${{ github.ref }}" != "refs/heads/main" && "${{ github.ref }}" != "refs/heads/test" ]]; then
+          echo "should_merge=true" >> $GITHUB_OUTPUT
+        else
+          echo "should_merge=false" >> $GITHUB_OUTPUT
+        fi
+
+  auto-merge:
+    needs: ci
+    if: needs.ci.outputs.should_merge == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Configure Git
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+
+    - name: Merge Logic
+      env:
+        HAS_TEST_ENV: ${{ vars.HAS_TEST_ENV }}
+        SOURCE_BRANCH: ${{ github.ref_name }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Détermination de la branche cible selon la règle globale (insensible à la casse)
+        HTE_LOWER=$(echo "$HAS_TEST_ENV" | tr '[:upper:]' '[:lower:]')
+        if [[ "$HTE_LOWER" == "true" ]]; then
+          TARGET_BRANCH="test"
+        else
+          TARGET_BRANCH="main"
+        fi
+        
+        echo "Auto-merge detected: $SOURCE_BRANCH -> $TARGET_BRANCH"
+        
+        # Création de la PR si elle n'existe pas
+        PR_URL=$(gh pr create --base $TARGET_BRANCH --head $SOURCE_BRANCH --title "chore: automated merge $SOURCE_BRANCH into $TARGET_BRANCH" --body "Automated PR created by CI quality gate." || gh pr list --head $SOURCE_BRANCH --json url --jq '.[0].url')
+        
+        # Tentative d'auto-merge (si activé sur le repo), sinon merge direct
+        gh pr merge --auto --merge --delete-branch "$PR_URL" || gh pr merge --merge --delete-branch "$PR_URL"

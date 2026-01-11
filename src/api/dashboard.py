@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import os
 
 from src.model.monitoring import generate_drift_report
+from src.model.loader import loader
 
 
 @st.cache_data(show_spinner=False)
@@ -98,7 +99,7 @@ with tab_monitoring:
         "Analyse de la dérive des données entre l'entraînement (Reference) et la production (Current)."
     )
 
-    DB_PATH = "data/database.sqlite"
+    DB_PATH = loader.db_path
     REPORT_PATH = "data/drift_report.html"
 
     if st.button("🔄 Générer le rapport de dérive"):

@@ -25,3 +25,4 @@ build/
 .mypy_cache/
 .ipynb_checkpoints/api.log
 docker_build.log
+api.log

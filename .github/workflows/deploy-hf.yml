@@ -19,5 +19,14 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          # On crée un dossier propre avec seulement ce qui est nécessaire
+          mkdir deploy_dir
+          rsync -av --exclude='.git' --exclude='.venv' --exclude='data' --exclude='__pycache__' . deploy_dir/
+          cd deploy_dir
+          git init
+          git add .
+          git commit -m "Deploy: ${{ github.sha }}"
           git remote add space https://damienguesdon:$HF_TOKEN@huggingface.co/spaces/damienguesdon/credit-scoring-app
-          git push --force space main
+          git push --force space master:main

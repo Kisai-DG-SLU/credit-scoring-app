@@ -81,7 +81,7 @@ jobs:
     - name: Merge Logic
       env:
         HAS_TEST_ENV: ${{ vars.HAS_TEST_ENV }}
-        SOURCE_BRANCH: ${{ github.ref_name }}
+        SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # Détermination de la branche cible selon la règle globale (insensible à la casse)

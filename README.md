@@ -1,6 +1,7 @@
 # Prêt à dépenser (Credit Scoring App)
 
 ![CI](https://github.com/Kisai-DG-SLU/credit-scoring-app/actions/workflows/ci.yml/badge.svg)
+![Deploy](https://github.com/Kisai-DG-SLU/credit-scoring-app/actions/workflows/deploy-hf.yml/badge.svg)
 ![Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)
 ![Release](https://img.shields.io/github/v/release/Kisai-DG-SLU/credit-scoring-app)
 ![Python](https://img.shields.io/badge/python-3.10-blue)
@@ -73,6 +74,12 @@ make run-api
 ```
 - **API Root** : `http://localhost:8000`
 - **Documentation Swagger** : `http://localhost:8000/docs`
+
+### Déploiement Cloud (Hugging Face)
+
+Le projet est automatiquement déployé sur Hugging Face Spaces via GitHub Actions à chaque mise à jour de la branche `main`.
+
+- **URL de Production** : [https://huggingface.co/spaces/damienguesdon/credit-scoring-app](https://huggingface.co/spaces/damienguesdon/credit-scoring-app)
 
 ### Commandes de Développement (Makefile)
 

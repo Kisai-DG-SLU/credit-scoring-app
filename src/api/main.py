@@ -15,12 +15,11 @@ logging.basicConfig(
 logger = logging.getLogger("credit-scoring-api")
 
 app = FastAPI(title="Credit Scoring API", version="1.0.0")
-DB_FILE = "data/database.sqlite"
 
 
 @app.on_event("startup")
 async def startup_event():
-    init_logs_db(DB_FILE)
+    init_logs_db(loader.db_path)
 
 
 @app.middleware("http")
@@ -86,7 +85,9 @@ def predict(client_id: int):
     decision = "Refusé" if prob > DEFAULT_THRESHOLD else "Accordé"
 
     try:
-        log_prediction(DB_FILE, client_id, float(prob), decision, features.iloc[0])
+        log_prediction(
+            loader.db_path, client_id, float(prob), decision, features.iloc[0]
+        )
     except Exception as e:
         logger.error(f"Erreur lors du logging en base : {e}")
 

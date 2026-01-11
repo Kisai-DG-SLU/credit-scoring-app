@@ -12,12 +12,32 @@ logger = logging.getLogger(__name__)
 class ModelLoader:
     _instance = None
     _model = None
-    _db_path = "data/database.sqlite"
+    _db_path = None
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(ModelLoader, cls).__new__(cls)
+            cls._instance._detect_db()
         return cls._instance
+
+    def _detect_db(self):
+        """Détecte la meilleure base de données disponible."""
+        paths = ["data/database.sqlite", "data/database_lite.sqlite"]
+        for p in paths:
+            if os.path.exists(p):
+                self._db_path = p
+                logger.info(f"Base de données détectée : {p}")
+                return
+
+        # Défaut si rien n'est trouvé (pour éviter les erreurs d'init)
+        self._db_path = "data/database.sqlite"
+        logger.warning(
+            "Aucune base de données trouvée, utilisation du chemin par défaut."
+        )
+
+    @property
+    def db_path(self):
+        return self._db_path
 
     def load_artifacts(self, model_path="src/model/model.joblib"):
         """Charge le modèle s'il n'est pas déjà chargé."""

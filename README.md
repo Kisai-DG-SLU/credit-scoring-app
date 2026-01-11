@@ -1,3 +1,12 @@
+---
+title: Credit Scoring App
+emoji: 🏦
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+---
+
 # Prêt à dépenser (Credit Scoring App)
 
 ![CI](https://github.com/Kisai-DG-SLU/credit-scoring-app/actions/workflows/ci.yml/badge.svg)

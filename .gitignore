@@ -6,7 +6,11 @@ __pycache__/
 .coverage
 htmlcov/
 coverage.xml
-data/
+# Data artifacts (Ignore heavy files, allow lite DB)
+data/*
+!data/database_lite.sqlite
+!data/.gitkeep
+
 _bmad-output/
 
 # Python virtual environments

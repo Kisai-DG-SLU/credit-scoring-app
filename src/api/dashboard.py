@@ -5,6 +5,12 @@ import os
 
 from src.model.monitoring import generate_drift_report
 
+
+@st.cache_data(show_spinner=False)
+def get_cached_drift_report(db_path, report_path):
+    return generate_drift_report(db_path, report_path)
+
+
 st.set_page_config(page_title="Credit Scoring Dashboard", layout="wide")
 
 st.title("🏦 Dashboard de Scoring Crédit")
@@ -12,6 +18,12 @@ st.markdown("---")
 
 # Configuration de l'API (Sidebar commune)
 API_URL = st.sidebar.text_input("URL de l'API", "http://localhost:8000")
+
+
+@st.cache_data(show_spinner=False)
+def get_prediction(api_url, client_id):
+    return requests.get(f"{api_url}/predict/{client_id}")
+
 
 # Onglets
 tab_scoring, tab_monitoring = st.tabs(["Scoring Client", "Monitoring Data Drift"])
@@ -30,7 +42,7 @@ with tab_scoring:
     if predict_btn:
         with st.spinner("Requête à l'API en cours..."):
             try:
-                response = requests.get(f"{API_URL}/predict/{client_id}")
+                response = get_prediction(API_URL, client_id)
 
                 if response.status_code == 200:
                     data = response.json()
@@ -91,8 +103,8 @@ with tab_monitoring:
 
     if st.button("🔄 Générer le rapport de dérive"):
         with st.spinner("Analyse de la dérive en cours (Evidently AI)..."):
-            # On génère le rapport
-            result = generate_drift_report(DB_PATH, REPORT_PATH)
+            # On génère le rapport (caché)
+            result = get_cached_drift_report(DB_PATH, REPORT_PATH)
 
             if result:
                 st.success(f"Rapport généré avec succès ! ({result})")

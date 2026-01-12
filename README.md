@@ -14,7 +14,7 @@ pinned: false
 [![Coverage](https://img.shields.io/badge/coverage-79%25-brightgreen)](https://Kisai-DG-SLU.github.io/credit-scoring-app/)
 ![Release](https://img.shields.io/github/v/release/Kisai-DG-SLU/credit-scoring-app)
 ![Python](https://img.shields.io/badge/python-3.10-blue)
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+![License](https://img.shields.io/github/license/Kisai-DG-SLU/credit-scoring-app)
 
 > **Projet 7/8 - Parcours Data Scientist OpenClassrooms**
 >

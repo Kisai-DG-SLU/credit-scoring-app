@@ -34,6 +34,7 @@ jobs:
           # Configuration LFS dans le nouveau repo
           git lfs install
           git lfs track "*.joblib"
+          git lfs track "*.sqlite"
           git add .gitattributes
           git add .
           git commit -m "Deploy: ${{ github.sha }} with LFS"

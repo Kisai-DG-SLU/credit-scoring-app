@@ -11,8 +11,8 @@ pinned: false
 
 ![CI](https://github.com/Kisai-DG-SLU/credit-scoring-app/actions/workflows/ci.yml/badge.svg)
 ![Deploy](https://github.com/Kisai-DG-SLU/credit-scoring-app/actions/workflows/deploy-hf.yml/badge.svg)
-[![Coverage](https://img.shields.io/badge/coverage-79%25-brightgreen)](https://Kisai-DG-SLU.github.io/credit-scoring-app/)
-![Release](https://img.shields.io/github/v/release/Kisai-DG-SLU/credit-scoring-app)
+[![Coverage](https://img.shields.io/badge/coverage-79%25-brightgreen)](https://kisai-dg-slu.github.io/credit-scoring-app/)
+![Tag](https://img.shields.io/github/v/tag/Kisai-DG-SLU/credit-scoring-app)
 ![Python](https://img.shields.io/badge/python-3.10-blue)
 ![License](https://img.shields.io/github/license/Kisai-DG-SLU/credit-scoring-app)
 

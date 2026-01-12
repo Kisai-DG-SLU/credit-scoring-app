@@ -22,16 +22,25 @@ RUN conda env create -f environment.yml && \
 COPY src/ src/
 COPY data/ data/
 COPY .env.template .env
+COPY entrypoint.sh .
 
 # S'assurer que l'utilisateur non-root a les droits sur le répertoire de travail
-RUN chown -R appuser:appuser /app
+# et rendre le script d'entrypoint exécutable
+RUN chown -R appuser:appuser /app && chmod +x entrypoint.sh
 
 # Passer à l'utilisateur non-root
 USER appuser
 
-# Exposer le port de l'API
-EXPOSE 8000
+# Variables d'environnement pour l'utilisateur non-root
+ENV HOME=/app
+ENV PYTHONPATH=/app
+ENV MPLCONFIGDIR=/tmp/matplotlib
+ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
+ENV STREAMLIT_SERVER_PORT=8501
 
-# Utiliser conda run pour exécuter l'application dans l'environnement activé
-# L'option --no-capture-output permet de voir les logs en temps réel
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "credit-scoring-app", "uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Exposer les ports (API + Dashboard)
+EXPOSE 8000
+EXPOSE 8501
+
+# Utiliser conda run pour exécuter le script d'entrypoint
+ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "credit-scoring-app", "./entrypoint.sh"]

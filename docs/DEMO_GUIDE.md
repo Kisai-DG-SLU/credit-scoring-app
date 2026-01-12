@@ -21,12 +21,12 @@ Ce guide détaille le scénario de démonstration pour la présentation du proje
 *Lancer le dashboard Streamlit.*
 
 ### Scénario "Client Accepté"
-1. Saisir l'ID d'un client avec un bon score (ex: `100001`).
+1. Saisir l'ID d'un client avec un bon score (ex: `100004`).
 2. Montrer le score vert, le positionnement par rapport au seuil de décision.
 3. Expliquer les facteurs positifs (ex: Revenu élevé, ratio d'endettement faible).
 
 ### Scénario "Client Refusé"
-1. Saisir un ID client avec un risque élevé.
+1. Saisir l'ID d'un client avec un risque élevé (ex: `100431`).
 2. Montrer le score rouge.
 3. Utiliser les graphiques de **Feature Importance** pour expliquer au client pourquoi son prêt a été refusé (transparence RGPD).
 
@@ -45,10 +45,32 @@ Ce guide détaille le scénario de démonstration pour la présentation du proje
 - Le projet répond aux exigences de performance, de qualité logicielle et d'éthique (explicabilité).
 - Prêt pour une mise en production réelle.
 
+## 7. Récit d'Ingénierie (Storytelling)
+*À utiliser pour répondre aux questions "Quelles difficultés avez-vous rencontrées ?"*
+
+### 🧱 Obstacle 1 : "Memory Leak" & Coûts Cloud
+- **Situation** : Le dataset CSV faisait 1.3 Go. Charger Pandas demandait 4 à 6 Go de RAM.
+- **Impact** : Impossible de déployer sur Hugging Face (limite 16 Go, mais lent) ou sur des serveurs low-cost.
+- **Résolution** : Migration vers **SQLite**.
+- **Gain** : On ne charge en mémoire QUE le client demandé. Empreinte RAM divisée par 50.
+
+### 🐳 Obstacle 2 : L'Enfer du Build Docker
+- **Situation** : Les premières images Docker pesaient 4.5 Go et faisaient planter le build (disque saturé).
+- **Cause** : Le contexte Docker embarquait le CSV d'entraînement et la base complète inutilement.
+- **Résolution** :
+    1. Mise en place stricte du `.dockerignore`.
+    2. Création d'un script `create_lite_db.py` pour générer une base de démo (24 Mo).
+- **Gain** : Image finale allégée (~2 Go) et builds rapides.
+
+### ☁️ Obstacle 3 : Déploiement "All-in-One"
+- **Situation** : Hugging Face Spaces n'attend qu'un seul service, mais j'avais une API (Backend) et un Dashboard (Frontend).
+- **Résolution** : Développement d'un script d'orchestration (`entrypoint.sh`) qui lance FastAPI en arrière-plan et Streamlit au premier plan dans le même conteneur.
+
 ---
 
 ### Commandes Utiles pour la démo :
-- **Lancer l'API** : `make run-api`
-- **Lancer le Dashboard** : `streamlit run src/api/dashboard.py`
+- **Lancer TOUT via Docker (Recommandé)** : `make docker-build && make docker-run`
+- **Lancer l'API (Local)** : `make run-api`
+- **Lancer le Dashboard (Local)** : `streamlit run src/api/dashboard.py`
 - **Accès Swagger** : `http://localhost:8000/docs`
 - **Accès Dashboard** : `http://localhost:8501`

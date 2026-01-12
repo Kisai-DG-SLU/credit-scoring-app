@@ -163,7 +163,7 @@ with tab_monitoring:
                 fig_score.add_vline(
                     x=0.49, line_dash="dash", line_color="red", annotation_text="Seuil"
                 )
-                st.plotly_chart(fig_score, use_container_width=True)
+                st.plotly_chart(fig_score, width="stretch")
 
             with col_stat2:
                 st.markdown("**Latence des Prédictions (ms)**")
@@ -175,7 +175,7 @@ with tab_monitoring:
                         y="latency_ms",
                         color_discrete_sequence=["#ff0051"],
                     )
-                    st.plotly_chart(fig_lat, use_container_width=True)
+                    st.plotly_chart(fig_lat, width="stretch")
                 else:
                     st.info("Données de latence en attente de collecte.")
         else:

@@ -26,6 +26,7 @@ description = "Credit Scoring API & Dashboard"
 authors = [
     {name = "Damien Guesdon", email = "damien@example.com"},
 ]
+license = {text = "MIT"}
 requires-python = ">=3.10"
 
 [tool.pytest.ini_options]

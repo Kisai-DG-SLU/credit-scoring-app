@@ -55,26 +55,37 @@ Ce guide détaille le scénario de démonstration pour la présentation du proje
 ### 2. Choix Technologiques (P8)
 ... (existant)
 
-## 7. Récit d'Ingénierie (Storytelling)
+## 7. Cheat Sheet Technique : Réponses aux Questions Critiques
+
+| Thème | Question probable | Argumentaire à tenir (Punchlines) |
+| :--- | :--- | :--- |
+| **Données** | Pourquoi SQLite plutôt que du CSV ? | "Pour l'efficience. Le CSV imposait un scan total de 1.3 Go en RAM à chaque appel. SQLite indexé permet un accès direct disque en < 10ms, divisant l'usage RAM par 50." |
+| **Performance** | Votre API est rapide, comment avez-vous optimisé ? | "Nous avons implémenté un **Warmup** au démarrage pour pré-charger le modèle en cache et migré vers une base de données indexée. Latence stabilisée à ~270ms." |
+| **Monitoring** | Comment détectez-vous qu'un modèle devient obsolète ? | "Grâce au monitoring de **Data Drift** (Evidently AI). Nous comparons périodiquement les distributions des features de prod (logs) aux données d'entraînement." |
+| **Sécurité** | Comment gérez-vous les données sensibles ? | "Architecture par ID technique uniquement. Aucune donnée nominative (nom, prénom) n'est stockée ni traitée, assurant une conformité **RGPD 'by design'**." |
+| **DevOps** | Pourquoi Docker et GitHub Actions ? | "Pour la reproductibilité totale (principe 'Build once, run anywhere') et la garantie d'une qualité constante via la CI/CD (Coverage > 70% requis)." |
+| **Métier** | Pourquoi un seuil à 0.49 et pas 0.50 ? | "C'est une décision métier basée sur une **fonction de coût asymétrique** : un faux négatif (client insolvable accepté) coûte 10x plus cher à la banque qu'un faux positif." |
+
+## 8. Récit d'Ingénierie (Storytelling)
 *À utiliser pour répondre aux questions "Quelles difficultés avez-vous rencontrées ?"*
 
 ### 🧱 Obstacle 1 : "Memory Leak" & Coûts Cloud
 - **Situation** : Le dataset CSV faisait 1.3 Go. Charger Pandas demandait 4 à 6 Go de RAM.
-- **Impact** : Impossible de déployer sur Hugging Face (limite 16 Go, mais lent) ou sur des serveurs low-cost.
+- **Impact** : Impossible de déployer sur Hugging Face (limite RAM) ou sur des serveurs low-cost.
 - **Résolution** : Migration vers **SQLite**.
-- **Gain** : On ne charge en mémoire QUE le client demandé. Empreinte RAM divisée par 50.
+- **Gain** : On ne charge en mémoire QUE le client demandé. Empreinte RAM divisée par 50 (Passage de 6 Go à < 100 Mo).
 
 ### 🐳 Obstacle 2 : L'Enfer du Build Docker
 - **Situation** : Les premières images Docker pesaient 4.5 Go et faisaient planter le build (disque saturé).
 - **Cause** : Le contexte Docker embarquait le CSV d'entraînement et la base complète inutilement.
 - **Résolution** :
     1. Mise en place stricte du `.dockerignore`.
-    2. Création d'un script `create_lite_db.py` pour générer une base de démo (24 Mo).
-- **Gain** : Image finale allégée (~2 Go) et builds rapides.
+    2. Stratégie d'**Hybridation** : Utilisation d'une Base Lite (< 10 Mo) pour la démo Cloud.
+- **Gain** : Image finale allégée (~500 Mo) et déploiement ultra-rapide sur Hugging Face.
 
 ### ☁️ Obstacle 3 : Déploiement "All-in-One"
 - **Situation** : Hugging Face Spaces n'attend qu'un seul service, mais j'avais une API (Backend) et un Dashboard (Frontend).
-- **Résolution** : Développement d'un script d'orchestration (`entrypoint.sh`) qui lance FastAPI en arrière-plan et Streamlit au premier plan dans le même conteneur.
+- **Résolution** : Développement d'un script d'orchestration (`entrypoint.sh`) qui lance FastAPI en arrière-plan et Streamlit au premier plan dans le même conteneur via un monitoring de processus.
 
 ---
 

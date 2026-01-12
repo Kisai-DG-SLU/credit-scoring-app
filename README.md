@@ -54,55 +54,31 @@ Pour répondre aux contraintes de production (Cloud Free Tier, Latence faible), 
     *   *Problème* : Le dataset original (CSV) pesait 1.3 Go, saturant la RAM des petits conteneurs.
     *   *Solution* : Conversion vers **SQLite** indexé. Chargement sélectif des clients (< 10ms). Usage RAM < 100 Mo.
 
-2.  **Optimisation de l'Image Docker**
+2.  **Stratégie d'Hybridation des Données**
+    *   **Mode Local (Full)** : Utilise `data/database.sqlite` (850 Mo) pour un accès à l'intégralité des 307 511 clients.
+    *   **Mode Cloud (Lite)** : Utilise `data/database_lite.sqlite` (< 10 Mo) incluse dans le repository pour garantir un build Docker rapide et stable sur Hugging Face Spaces. L'API bascule automatiquement sur la base disponible au démarrage.
+
+3.  **Optimisation de l'Image Docker**
     *   *Problème* : Image initiale > 4 Go incluant les datasets d'entraînement.
-    *   *Solution* : Exclusion des fichiers lourds (`.dockerignore`) et création d'une **Base Lite** (24 Mo) dédiée à la démo/prod.
+    *   *Solution* : Image multi-stage optimisée à **~500 Mo** (Python Slim + SQLite Lite).
 
-3.  **Architecture "All-in-One"**
-    *   *Solution* : Orchestration unique via `entrypoint.sh` permettant de servir l'API et le Dashboard dans un seul conteneur, simplifiant le déploiement sur les PaaS (Hugging Face Spaces).
-
-## 🎯 Objectifs du Projet
-... (existant)
-
-## 🏗️ Héritage et Continuité (Projet 6)
-Ce projet industrialise les résultats validés lors du **Projet 6 (Scoring Crédit)** :
-- **Modèle** : LGBMClassifier optimisé (AUC ~0.78).
-- **Seuil Décisionnel** : Fixé à **0.49** (optimisation du coût métier : 10x plus de poids sur les Faux Négatifs).
-- **Feature Engineering** : Pipeline complet de 795 features (aggrégations Bureau, Prev, POS, Installments).
-- **Explicabilité** : Standardisation du rendu **SHAP Waterfall** (Top 15 features) pour les conseillers.
-
-## 🚀 Installation & Usage
-... (suite)
-
-### Option 1 : Docker (Recommandé - Démo All-in-One)
-Le projet est entièrement conteneurisé. L'image lance automatiquement l'API et le Dashboard.
-
-```bash
-# Build de l'image (optimisée avec base SQLite Lite)
-make docker-build
-
-# Lancement du conteneur (API:8000 + Dashboard:8501)
-make docker-run
-```
-
-### Option 2 : Installation Locale (Conda)
-Pré-requis : **Conda** (Miniconda recommandé).
-
-1. **Installer l'environnement**
-   ```bash
-   make install
-   conda activate credit-scoring-app
-   ```
-
-2. **Démarrer les services séparément**
-   *   **API** : `make run-api` (Port 8000)
-   *   **Dashboard** : `streamlit run src/api/dashboard.py` (Port 8501)
+4.  **Réduction de la Latence (Warmup)**
+    *   Le système effectue une prédiction "à vide" au démarrage de l'API (Warmup) pour pré-charger les modèles en cache. Latence moyenne observée : **~270ms**.
 
 ## 📊 Monitoring & Data Drift
 
-Le système inclut un module de monitoring basé sur **Evidently AI**.
-- **Base Lite** : Utilise `data/database_lite.sqlite` (24 Mo) pour des performances optimales en démo.
-- **Logs** : Chaque prédiction est enregistrée dans une table SQLite structurée.
+Le système implémente une surveillance continue de la qualité des données (MLOps) :
+- **Traçabilité** : Chaque appel API est logué dans une table SQLite `prediction_logs` (Date, ID, Score, Décision).
+- **Analyse du Drift** : Un notebook dédié (`notebooks/data_drift_analysis.ipynb`) utilise **Evidently AI** pour comparer les données de production aux données de référence (Training).
+- **Indicateurs Clés** : Surveillance prioritaire sur le Top-10 des features (EXT_SOURCES, DAYS_BIRTH, etc.).
+
+## 🛡️ Robustesse & Erreurs
+
+- **Validation des Entrées** : Utilisation de modèles Pydantic pour interdire les requêtes malformées.
+- **Gestion des Cas Limites** :
+    *   **Client Inconnu** : Retourne un code `404 Not Found` propre avec message pédagogique.
+    *   **Données Manquantes** : Le pipeline de preprocessing gère l'imputation automatique des valeurs manquantes via le modèle pré-entraîné.
+    *   **Sécurité** : Logs anonymisés (pas de données personnelles sensibles hors ID technique).
 
 
 ## 🛠 Commandes Makefile

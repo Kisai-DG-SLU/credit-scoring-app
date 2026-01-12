@@ -30,9 +30,9 @@ class ModelLoader:
         # Chemins absolus pour éviter les surprises
         paths = [
             BASE_DIR / "data/database.sqlite",
-            BASE_DIR / "data/database_lite.sqlite"
+            BASE_DIR / "data/database_lite.sqlite",
         ]
-        
+
         for p in paths:
             if p.exists():
                 self._db_path = str(p)

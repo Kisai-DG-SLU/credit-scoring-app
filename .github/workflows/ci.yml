@@ -79,15 +79,21 @@ jobs:
         SOURCE_BRANCH: ${{ github.ref_name }}
         GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
       run: |
-        echo "Creating PR for $SOURCE_BRANCH..."
-        PR_URL=$(gh pr create --base main --head $SOURCE_BRANCH --title "chore: automated merge $SOURCE_BRANCH" --body "CI quality gate passed." --json url --jq .url || gh pr list --head $SOURCE_BRANCH --json url --jq '.[0].url')
+        echo "Creating/Finding PR for $SOURCE_BRANCH..."
+        gh pr create --base main --head "$SOURCE_BRANCH" --title "chore: automated merge $SOURCE_BRANCH" --body "CI quality gate passed." || echo "PR exists"
+        
+        PR_URL=$(gh pr list --head "$SOURCE_BRANCH" --json url --jq '.[0].url')
+        echo "Found PR: $PR_URL"
         
         echo "Waiting for PR to stabilize..."
-        max_retries=10
-        count=0
-        until [[ $(gh pr view "$PR_URL" --json mergeable --jq .mergeable) != "UNKNOWN" ]] || [[ $count -eq $max_retries ]]; do
+        for i in {1..10}; do
+          STATE=$(gh pr view "$PR_URL" --json mergeable --jq .mergeable)
+          if [ "$STATE" != "UNKNOWN" ]; then 
+            echo "PR stabilized with state: $STATE"
+            break
+          fi
+          echo "Still UNKNOWN, waiting..."
           sleep 2
-          ((count++))
         done
         
         echo "Enabling Auto-merge for $PR_URL"

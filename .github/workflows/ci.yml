@@ -79,9 +79,19 @@ jobs:
         SOURCE_BRANCH: ${{ github.ref_name }}
         GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
       run: |
-        echo "Auto-merge: $SOURCE_BRANCH -> main"
-        gh pr create --base main --head $SOURCE_BRANCH --title "chore: automated merge $SOURCE_BRANCH" --body "CI quality gate passed." || echo "PR already exists"
-        gh pr merge --auto --merge --delete-branch
+        echo "Creating PR for $SOURCE_BRANCH..."
+        PR_URL=$(gh pr create --base main --head $SOURCE_BRANCH --title "chore: automated merge $SOURCE_BRANCH" --body "CI quality gate passed." --json url --jq .url || gh pr list --head $SOURCE_BRANCH --json url --jq '.[0].url')
+        
+        echo "Waiting for PR to stabilize..."
+        max_retries=10
+        count=0
+        until [[ $(gh pr view "$PR_URL" --json mergeable --jq .mergeable) != "UNKNOWN" ]] || [[ $count -eq $max_retries ]]; do
+          sleep 2
+          ((count++))
+        done
+        
+        echo "Enabling Auto-merge for $PR_URL"
+        gh pr merge --auto --merge --delete-branch "$PR_URL"
 
   deploy-docs:
     needs: ci

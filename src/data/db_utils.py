@@ -34,11 +34,18 @@ def init_logs_db(db_path="data/database.sqlite"):
         score REAL,
         decision TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        latency REAL,
         {cols}
     )
     """
 
     cursor.execute(create_query)
+
+    # Vérification si la colonne latency existe (pour les migrations de base existantes)
+    try:
+        cursor.execute("ALTER TABLE prediction_logs ADD COLUMN latency REAL")
+    except sqlite3.OperationalError:
+        pass  # La colonne existe déjà
 
     # Création d'index pour optimiser les requêtes par date
     cursor.execute(
@@ -49,7 +56,7 @@ def init_logs_db(db_path="data/database.sqlite"):
     conn.close()
 
 
-def log_prediction(db_path, client_id, score, decision, features):
+def log_prediction(db_path, client_id, score, decision, features, latency=None):
     """
     Enregistre une prédiction et les features associées.
 
@@ -59,6 +66,7 @@ def log_prediction(db_path, client_id, score, decision, features):
         score (float): Score de probabilité.
         decision (str): Décision (Accordé/Refusé).
         features (dict): Dictionnaire contenant les valeurs des features.
+        latency (float, optional): Latence de la requête en secondes.
     """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -90,14 +98,14 @@ def log_prediction(db_path, client_id, score, decision, features):
     # Construction de la requête
     placeholders = ", ".join(["?" for _ in LOG_FEATURES])
     insert_query = f"""
-    INSERT INTO prediction_logs (client_id, score, decision, timestamp, {', '.join(LOG_FEATURES)})
-    VALUES (?, ?, ?, ?, {placeholders})
+    INSERT INTO prediction_logs (client_id, score, decision, timestamp, latency, {', '.join(LOG_FEATURES)})
+    VALUES (?, ?, ?, ?, ?, {placeholders})
     """
 
     # Date actuelle explicite
     timestamp = datetime.datetime.now().isoformat()
 
-    params = [client_id, score, decision, timestamp] + feature_values
+    params = [client_id, score, decision, timestamp, latency] + feature_values
 
     cursor.execute(insert_query, params)
     conn.commit()

@@ -46,17 +46,43 @@ Le projet suit une architecture découplée et industrialisée :
 └── .github/          # Workflows CI/CD (Tests, Déploiement Cloud)
 ```
 
-## 🚀 Installation & Lancement Rapide
+## ⚙️ Optimisations & Performance
 
-### Option 1 : Docker (Recommandé)
-Le projet est entièrement conteneurisé.
+Pour répondre aux contraintes de production (Cloud Free Tier, Latence faible), plusieurs défis d'ingénierie ont été relevés :
+
+1.  **Réduction de l'Empreinte Mémoire (RAM)**
+    *   *Problème* : Le dataset original (CSV) pesait 1.3 Go, saturant la RAM des petits conteneurs.
+    *   *Solution* : Conversion vers **SQLite** indexé. Chargement sélectif des clients (< 10ms). Usage RAM < 100 Mo.
+
+2.  **Optimisation de l'Image Docker**
+    *   *Problème* : Image initiale > 4 Go incluant les datasets d'entraînement.
+    *   *Solution* : Exclusion des fichiers lourds (`.dockerignore`) et création d'une **Base Lite** (24 Mo) dédiée à la démo/prod.
+
+3.  **Architecture "All-in-One"**
+    *   *Solution* : Orchestration unique via `entrypoint.sh` permettant de servir l'API et le Dashboard dans un seul conteneur, simplifiant le déploiement sur les PaaS (Hugging Face Spaces).
+
+## 🎯 Objectifs du Projet
+... (existant)
+
+## 🏗️ Héritage et Continuité (Projet 6)
+Ce projet industrialise les résultats validés lors du **Projet 6 (Scoring Crédit)** :
+- **Modèle** : LGBMClassifier optimisé (AUC ~0.78).
+- **Seuil Décisionnel** : Fixé à **0.49** (optimisation du coût métier : 10x plus de poids sur les Faux Négatifs).
+- **Feature Engineering** : Pipeline complet de 795 features (aggrégations Bureau, Prev, POS, Installments).
+- **Explicabilité** : Standardisation du rendu **SHAP Waterfall** (Top 15 features) pour les conseillers.
+
+## 🚀 Installation & Usage
+... (suite)
+
+### Option 1 : Docker (Recommandé - Démo All-in-One)
+Le projet est entièrement conteneurisé. L'image lance automatiquement l'API et le Dashboard.
 
 ```bash
-# Build de l'image
-docker build -t credit-scoring-app .
+# Build de l'image (optimisée avec base SQLite Lite)
+make docker-build
 
-# Lancement du conteneur (API + Dashboard)
-docker run -p 8000:8000 -p 8501:8501 credit-scoring-app
+# Lancement du conteneur (API:8000 + Dashboard:8501)
+make docker-run
 ```
 
 ### Option 2 : Installation Locale (Conda)
@@ -68,15 +94,16 @@ Pré-requis : **Conda** (Miniconda recommandé).
    conda activate credit-scoring-app
    ```
 
-2. **Démarrer les services**
+2. **Démarrer les services séparément**
    *   **API** : `make run-api` (Port 8000)
    *   **Dashboard** : `streamlit run src/api/dashboard.py` (Port 8501)
 
 ## 📊 Monitoring & Data Drift
 
 Le système inclut un module de monitoring basé sur **Evidently AI**.
+- **Base Lite** : Utilise `data/database_lite.sqlite` (24 Mo) pour des performances optimales en démo.
 - **Logs** : Chaque prédiction est enregistrée dans une table SQLite structurée.
-- **Analyse de dérive** : Le dashboard permet de générer un rapport de Data Drift comparant les données de production aux données de référence.
+
 
 ## 🛠 Commandes Makefile
 

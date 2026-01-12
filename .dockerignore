@@ -35,3 +35,7 @@ Makefile
 # Temporary
 *.log
 tmp/
+
+# Large Data Files (Use Lite version instead)
+data/*.csv
+data/database.sqlite

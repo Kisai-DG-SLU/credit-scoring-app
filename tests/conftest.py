@@ -4,9 +4,16 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import numpy as np
 
-# On patche le loader AVANT d'importer l'app pour éviter les effets de bord
-with patch("src.model.loader.loader.load_artifacts"):
-    from src.api.main import app
+from src.model.loader import loader
+from src.api.main import app
+
+
+@pytest.fixture(autouse=True)
+def reset_loader():
+    """Réinitialise le singleton loader avant chaque test."""
+    loader._reset()
+    yield
+    loader._reset()
 
 
 @pytest.fixture

@@ -22,6 +22,9 @@ class ModelLoader:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(ModelLoader, cls).__new__(cls)
+            cls._instance.model = None
+            cls._instance.explainer = None
+            cls._instance.db_path = None
             cls._instance._detect_db()
         return cls._instance
 
@@ -35,57 +38,53 @@ class ModelLoader:
 
         for p in paths:
             if p.exists():
-                self._db_path = str(p)
-                logger.info(f"Base de données détectée : {self._db_path}")
+                self.db_path = str(p)
+                logger.info(f"Base de données détectée : {self.db_path}")
                 return
 
         # Défaut si rien n'est trouvé
-        self._db_path = str(BASE_DIR / "data/database.sqlite")
+        self.db_path = str(BASE_DIR / "data/database.sqlite")
         logger.warning(
-            f"Aucune base de données trouvée, utilisation du chemin par défaut : {self._db_path}"
+            f"Aucune base de données trouvée, utilisation du chemin par défaut : {self.db_path}"
         )
-
-    @property
-    def db_path(self):
-        return self._db_path
 
     def load_artifacts(self, model_path="src/model/model.joblib"):
         """Charge le modèle et l'explainer SHAP s'ils ne sont pas déjà chargés."""
-        if self._model is None:
+        if self.model is None:
             if os.path.exists(model_path):
                 logger.info(f"Chargement du modèle depuis {model_path}")
                 try:
-                    self._model = joblib.load(model_path)
+                    self.model = joblib.load(model_path)
 
                     # Extraction du classifieur du Pipeline pour SHAP
                     # Si c'est un Pipeline, on prend la dernière étape
                     if (
-                        hasattr(self._model, "named_steps")
-                        and "clf" in self._model.named_steps
+                        hasattr(self.model, "named_steps")
+                        and "clf" in self.model.named_steps
                     ):
-                        classifier = self._model.named_steps["clf"]
+                        classifier = self.model.named_steps["clf"]
                         logger.info(
                             "Initialisation de SHAP TreeExplainer sur le classifieur..."
                         )
-                        self._explainer = shap.TreeExplainer(classifier)
+                        self.explainer = shap.TreeExplainer(classifier)
                     else:
                         logger.info("Initialisation de SHAP Explainer standard...")
-                        self._explainer = shap.Explainer(self._model)
+                        self.explainer = shap.Explainer(self.model)
                 except Exception as e:
                     logger.error(f"Erreur lors du chargement des artefacts : {e}")
             else:
                 logger.warning(f"Fichier modèle non trouvé : {model_path}")
 
-        return self._model
+        return self.model
 
     def get_client_data(self, client_id):
         """Récupère les données d'un client spécifique depuis la base SQLite."""
-        if not os.path.exists(self._db_path):
-            logger.error(f"Base de données non trouvée : {self._db_path}")
+        if not self.db_path or not os.path.exists(self.db_path):
+            logger.error(f"Base de données non trouvée : {self.db_path}")
             return None
 
         try:
-            conn = sqlite3.connect(self._db_path)
+            conn = sqlite3.connect(self.db_path)
             query = "SELECT * FROM clients WHERE SK_ID_CURR = ?"
             df = pd.read_sql_query(query, conn, params=(client_id,))
             conn.close()
@@ -106,23 +105,23 @@ class ModelLoader:
 
     def get_shap_values(self, features):
         """Calcule les valeurs SHAP pour un ensemble de features."""
-        if self._explainer is None:
+        if self.explainer is None:
             self.load_artifacts()
 
-        if self._explainer is not None:
+        if self.explainer is not None:
             try:
-                shap_values = self._explainer(features)
+                shap_values = self.explainer(features)
                 return shap_values
             except Exception as e:
                 logger.error(f"Erreur lors du calcul SHAP : {e}")
                 return None
         return None
 
-    @property
-    def model(self):
-        if self._model is None:
-            self.load_artifacts()
-        return self._model
+    def _reset(self):
+        """Réinitialise l'instance (usage interne pour les tests)."""
+        self.model = None
+        self.explainer = None
+        self._detect_db()
 
 
 # Instance globale pour accès facile

@@ -45,6 +45,16 @@ Ce guide détaille le scénario de démonstration pour la présentation du proje
 - Le projet répond aux exigences de performance, de qualité logicielle et d'éthique (explicabilité).
 - Prêt pour une mise en production réelle.
 
+## 💡 Points Clés pour la Discussion Technique
+
+### 1. Continuité Métier (Héritage P6)
+- **Pourquoi ce seuil (0.49) ?** : Issu de l'étude de la fonction de coût métier visant à minimiser les pertes bancaires (FN > FP).
+- **Stabilité des Features** : Utilisation du pipeline `clean_feature_names` pour garantir que le modèle en production reçoit exactement le même format de données qu'à l'entraînement.
+- **Transparence (SHAP)** : Le choix du visuel Waterfall plot répond au besoin d'explicabilité locale immédiate pour le conseiller lors d'un entretien client.
+
+### 2. Choix Technologiques (P8)
+... (existant)
+
 ## 7. Récit d'Ingénierie (Storytelling)
 *À utiliser pour répondre aux questions "Quelles difficultés avez-vous rencontrées ?"*
 

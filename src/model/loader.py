@@ -3,6 +3,7 @@ import os
 import logging
 import sqlite3
 import pandas as pd
+import shap
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO)
@@ -12,6 +13,7 @@ logger = logging.getLogger(__name__)
 class ModelLoader:
     _instance = None
     _model = None
+    _explainer = None
     _db_path = None
 
     def __new__(cls):
@@ -40,14 +42,29 @@ class ModelLoader:
         return self._db_path
 
     def load_artifacts(self, model_path="src/model/model.joblib"):
-        """Charge le modèle s'il n'est pas déjà chargé."""
+        """Charge le modèle et l'explainer SHAP s'ils ne sont pas déjà chargés."""
         if self._model is None:
             if os.path.exists(model_path):
                 logger.info(f"Chargement du modèle depuis {model_path}")
                 try:
                     self._model = joblib.load(model_path)
+
+                    # Extraction du classifieur du Pipeline pour SHAP
+                    # Si c'est un Pipeline, on prend la dernière étape
+                    if (
+                        hasattr(self._model, "named_steps")
+                        and "clf" in self._model.named_steps
+                    ):
+                        classifier = self._model.named_steps["clf"]
+                        logger.info(
+                            "Initialisation de SHAP TreeExplainer sur le classifieur..."
+                        )
+                        self._explainer = shap.TreeExplainer(classifier)
+                    else:
+                        logger.info("Initialisation de SHAP Explainer standard...")
+                        self._explainer = shap.Explainer(self._model)
                 except Exception as e:
-                    logger.error(f"Erreur lors du chargement du modèle : {e}")
+                    logger.error(f"Erreur lors du chargement des artefacts : {e}")
             else:
                 logger.warning(f"Fichier modèle non trouvé : {model_path}")
 
@@ -70,7 +87,6 @@ class ModelLoader:
                 return None
 
             # Conversion des colonnes en numérique pour éviter les erreurs de type 'object'
-            # (Certaines colonnes peuvent contenir des chaînes vides ou None converties en object par SQLite)
             for col in df.columns:
                 if col not in ["SK_ID_CURR", "TARGET"]:
                     df[col] = pd.to_numeric(df[col], errors="coerce")
@@ -79,6 +95,20 @@ class ModelLoader:
         except Exception as e:
             logger.error(f"Erreur lors de la lecture de la base SQLite : {e}")
             return None
+
+    def get_shap_values(self, features):
+        """Calcule les valeurs SHAP pour un ensemble de features."""
+        if self._explainer is None:
+            self.load_artifacts()
+
+        if self._explainer is not None:
+            try:
+                shap_values = self._explainer(features)
+                return shap_values
+            except Exception as e:
+                logger.error(f"Erreur lors du calcul SHAP : {e}")
+                return None
+        return None
 
     @property
     def model(self):

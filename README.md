@@ -61,7 +61,18 @@ Pour répondre aux contraintes de production (Cloud Free Tier, Latence faible), 
 3.  **Architecture "All-in-One"**
     *   *Solution* : Orchestration unique via `entrypoint.sh` permettant de servir l'API et le Dashboard dans un seul conteneur, simplifiant le déploiement sur les PaaS (Hugging Face Spaces).
 
-## 🚀 Installation & Lancement Rapide
+## 🎯 Objectifs du Projet
+... (existant)
+
+## 🏗️ Héritage et Continuité (Projet 6)
+Ce projet industrialise les résultats validés lors du **Projet 6 (Scoring Crédit)** :
+- **Modèle** : LGBMClassifier optimisé (AUC ~0.78).
+- **Seuil Décisionnel** : Fixé à **0.49** (optimisation du coût métier : 10x plus de poids sur les Faux Négatifs).
+- **Feature Engineering** : Pipeline complet de 795 features (aggrégations Bureau, Prev, POS, Installments).
+- **Explicabilité** : Standardisation du rendu **SHAP Waterfall** (Top 15 features) pour les conseillers.
+
+## 🚀 Installation & Usage
+... (suite)
 
 ### Option 1 : Docker (Recommandé - Démo All-in-One)
 Le projet est entièrement conteneurisé. L'image lance automatiquement l'API et le Dashboard.

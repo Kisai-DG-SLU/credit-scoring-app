@@ -29,8 +29,7 @@ docker-build:
 	docker build -t credit-scoring-app .
 
 docker-run:
-	docker run -p 8000:8000 -p 8501:8501 credit-scoring-app
-
+        docker run -p 8000:8000 -p 8501:8501 -v $(PWD)/data:/app/data credit-scoring-app
 # --- Cleanup ---clean:
 	rm -rf __pycache__ .pytest_cache .ruff_cache coverage.html
 	find . -type d -name "__pycache__" -exec rm -rf {} +

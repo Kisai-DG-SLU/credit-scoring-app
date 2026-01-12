@@ -11,6 +11,8 @@ dependencies:
   - scikit-learn
   - lightgbm
   - joblib
+  - matplotlib
+  - plotly
   - shap
   - numba=0.59.1
   - llvmlite=0.42.0

@@ -7,7 +7,6 @@ from src.model.monitoring import generate_drift_report
 from src.model.loader import loader
 
 
-@st.cache_data(show_spinner=False)
 def get_cached_drift_report(db_path, report_path):
     return generate_drift_report(db_path, report_path)
 

@@ -12,11 +12,11 @@ pinned: false
 ![CI](https://github.com/Kisai-DG-SLU/credit-scoring-app/actions/workflows/ci.yml/badge.svg)
 ![Deploy](https://github.com/Kisai-DG-SLU/credit-scoring-app/actions/workflows/deploy-hf.yml/badge.svg)
 [![Coverage](https://img.shields.io/badge/coverage-79%25-brightgreen)](https://kisai-dg-slu.github.io/credit-scoring-app/)
-![Tag](https://img.shields.io/github/v/tag/Kisai-DG-SLU/credit-scoring-app)
+![Version](https://img.shields.io/github/v/tag/Kisai-DG-SLU/credit-scoring-app?label=version)
 ![Python](https://img.shields.io/badge/python-3.10-blue)
 ![License](https://img.shields.io/github/license/Kisai-DG-SLU/credit-scoring-app)
 
-> **Projet 7/8 - Parcours Data Scientist OpenClassrooms**
+> **Projet 8 - Parcours Data Scientist OpenClassrooms**
 >
 > Application d'évaluation du risque de crédit permettant de prédire la probabilité de défaut de paiement d'un client. Ce projet implémente une approche **MLOps** complète, de l'optimisation des données au monitoring de la dérive (Data Drift) en production.
 

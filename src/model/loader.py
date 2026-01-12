@@ -4,10 +4,13 @@ import logging
 import sqlite3
 import pandas as pd
 import shap
+from pathlib import Path
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class ModelLoader:
@@ -24,17 +27,22 @@ class ModelLoader:
 
     def _detect_db(self):
         """Détecte la meilleure base de données disponible."""
-        paths = ["data/database.sqlite", "data/database_lite.sqlite"]
+        # Chemins absolus pour éviter les surprises
+        paths = [
+            BASE_DIR / "data/database.sqlite",
+            BASE_DIR / "data/database_lite.sqlite"
+        ]
+        
         for p in paths:
-            if os.path.exists(p):
-                self._db_path = p
-                logger.info(f"Base de données détectée : {p}")
+            if p.exists():
+                self._db_path = str(p)
+                logger.info(f"Base de données détectée : {self._db_path}")
                 return
 
-        # Défaut si rien n'est trouvé (pour éviter les erreurs d'init)
-        self._db_path = "data/database.sqlite"
+        # Défaut si rien n'est trouvé
+        self._db_path = str(BASE_DIR / "data/database.sqlite")
         logger.warning(
-            "Aucune base de données trouvée, utilisation du chemin par défaut."
+            f"Aucune base de données trouvée, utilisation du chemin par défaut : {self._db_path}"
         )
 
     @property

@@ -35,7 +35,7 @@ def test_loader_singleton():
 def test_get_client_data_success(temp_db):
     """Vérifie la récupération et conversion des données."""
     loader = ModelLoader()
-    loader._db_path = temp_db  # On pointe vers la base de test
+    loader.db_path = temp_db  # On pointe vers la base de test
 
     # Test client 1 (nominal)
     df = loader.get_client_data(1)
@@ -57,7 +57,7 @@ def test_get_client_data_success(temp_db):
 def test_get_client_data_not_found(temp_db):
     """Vérifie le cas d'un client absent."""
     loader = ModelLoader()
-    loader._db_path = temp_db
+    loader.db_path = temp_db
     df = loader.get_client_data(999)
     assert df is None
 
@@ -65,6 +65,6 @@ def test_get_client_data_not_found(temp_db):
 def test_get_client_data_no_db():
     """Vérifie le comportement si la base n'existe pas."""
     loader = ModelLoader()
-    loader._db_path = "non_existent.sqlite"
+    loader.db_path = "non_existent.sqlite"
     df = loader.get_client_data(1)
     assert df is None

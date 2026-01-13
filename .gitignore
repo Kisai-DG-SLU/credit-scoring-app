@@ -28,3 +28,6 @@ build/
 .ruff_cache/
 .mypy_cache/
 .ipynb_checkpoints/
+
+# Local delivery folder
+delivery/

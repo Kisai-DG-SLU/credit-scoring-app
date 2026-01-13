@@ -28,8 +28,10 @@ CREATE TABLE prediction_logs (
     AMT_ANNUITY REAL, 
     AMT_CREDIT REAL, 
     AMT_INCOME_TOTAL REAL, 
-    DAYS_REGISTRATION REAL
+    DAYS_REGISTRATION REAL,
+    LATENCY REAL
 );
+CREATE INDEX idx_prediction_logs_client_id ON prediction_logs(client_id);
 ```
 
 ## 2. Preuve de Fonctionnement (Logs Temps Réel)

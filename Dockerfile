@@ -1,22 +1,26 @@
-# Utiliser une image de base officielle Miniconda
-FROM continuumio/miniconda3:latest
+# Utiliser une image de base Python légère
+FROM python:3.10-slim
 
 # Métadonnées
 LABEL maintainer="Damien Guesdon"
-LABEL description="API de Scoring Crédit (Projet 8)"
+LABEL description="API de Scoring Crédit (Projet 8) - Optimized Build"
 
 # Définir le répertoire de travail
 WORKDIR /app
 
+# Installation des dépendances système minimales (nécessaires pour lightgbm/shap)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Créer un utilisateur non-root pour la sécurité
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-# Copier le fichier de configuration de l'environnement
-COPY environment.yml .
+# Copier les fichiers de dépendances
+COPY requirements.txt .
 
-# Installer les dépendances et nettoyer le cache pour réduire la taille de l'image
-RUN conda env create -f environment.yml && \
-    conda clean -afy
+# Installer les dépendances via pip
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copier le code source de l'application et les données
 COPY src/ src/
@@ -31,7 +35,7 @@ RUN chown -R appuser:appuser /app && chmod +x entrypoint.sh
 # Passer à l'utilisateur non-root
 USER appuser
 
-# Variables d'environnement pour l'utilisateur non-root
+# Variables d'environnement
 ENV HOME=/app
 ENV PYTHONPATH=/app
 ENV MPLCONFIGDIR=/tmp/matplotlib
@@ -42,5 +46,5 @@ ENV STREAMLIT_SERVER_PORT=8501
 EXPOSE 8000
 EXPOSE 8501
 
-# Utiliser conda run pour exécuter le script d'entrypoint
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "credit-scoring-app", "./entrypoint.sh"]
+# Lancer le script d'entrypoint directement
+ENTRYPOINT ["./entrypoint.sh"]

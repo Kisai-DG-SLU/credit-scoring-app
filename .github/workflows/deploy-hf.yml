@@ -35,6 +35,7 @@ jobs:
           git lfs install
           git lfs track "*.joblib"
           git lfs track "*.sqlite"
+          git lfs track "*.onnx"
           git add .gitattributes
           git add .
           git commit -m "Deploy: ${{ github.sha }} with LFS"

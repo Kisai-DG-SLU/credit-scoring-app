@@ -65,12 +65,34 @@ Pour répondre aux contraintes de production (Cloud Free Tier, Latence faible), 
 4.  **Réduction de la Latence (Warmup)**
     *   Le système effectue une prédiction "à vide" au démarrage de l'API (Warmup) pour pré-charger les modèles en cache. Latence moyenne observée : **~270ms**.
 
-## 📊 Monitoring & Data Drift
+## 🏗️ Architecture & Industrialisation
 
-Le système implémente une surveillance continue de la qualité des données (MLOps) :
-- **Traçabilité** : Chaque appel API est logué dans une table SQLite `prediction_logs` (Date, ID, Score, Décision).
-- **Analyse du Drift** : Un notebook dédié (`notebooks/data_drift_analysis.ipynb`) utilise **Evidently AI** pour comparer les données de production aux données de référence (Training).
-- **Indicateurs Clés** : Surveillance prioritaire sur le Top-10 des features (EXT_SOURCES, DAYS_BIRTH, etc.).
+### Inférence & Optimisation (Étape 4)
+- **Format ONNX** : Le modèle est converti en format ONNX (`model.onnx`) pour une inférence standardisée et performante.
+- **Cache LRU** : Un mécanisme de cache (Least Recently Used) est implémenté pour mémoriser les résultats SHAP et les scores, réduisant la latence à **0.001ms** pour les requêtes répétées.
+- **Warmup** : L'API effectue une prédiction "à blanc" au démarrage pour initialiser les ressources (Explainer SHAP) et éviter la latence du premier appel utilisateur.
+
+### Stratégie de Données Hybride (SQLite)
+Pour concilier les limites de stockage de Git/HuggingFace et le besoin de monitoring :
+1. **`database_lite.sqlite` (< 10 Mo)** : Contient un échantillon représentatif de 1000 clients. Inclus dans le repository pour permettre un build Docker autonome.
+2. **`database.sqlite` (Production)** : Utilisée pour stocker les logs d'appels réels. C'est sur cette base que s'effectue l'analyse de Data Drift.
+
+## ✅ Conformité & Robustesse (Points de Vigilance)
+
+L'application répond aux exigences critiques de la mission :
+- **Chargement Unique** : Le modèle et les artefacts SHAP sont chargés via un **Singleton Pattern** au démarrage de l'API (`on_event("startup")`). Aucun rechargement n'est effectué lors des appels.
+- **Gestion des Erreurs** :
+    - **Données manquantes** : L'API convertit automatiquement les NaNs en types compatibles et retourne une prédiction robuste.
+    - **Identifiants invalides** : Gestion propre des erreurs 404.
+    - **Validation types** : Validation stricte des schémas d'entrée via Pydantic.
+- **Sécurité** : Configuration par variables d'environnement (`.env`).
+
+## 📊 Monitoring & Data Drift (Étape 3)
+
+Le système de monitoring compare les distributions de **10 features clés** (Top 10 Feature Importance).
+- **Reference** : Données d'entraînement (échantillon issu de la BDD).
+- **Current** : Logs réels de production stockés dans `prediction_logs`.
+- **Indicateur de Confiance** : Un seuil de significativité est appliqué dans le dashboard. L'analyse est considérée comme fiable à partir de **500 échantillons**.
 
 ## 🛡️ Robustesse & Erreurs
 

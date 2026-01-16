@@ -25,6 +25,10 @@ dependencies:
   - streamlit
   # Monitoring
   - evidently
+  # Optimisation & Inférence
+  - onnxruntime
+  - skl2onnx
+  - onnxmltools
   # Dev Tools & Testing
   - pytest
   - pytest-cov

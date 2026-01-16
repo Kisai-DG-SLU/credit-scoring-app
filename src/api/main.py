@@ -1,11 +1,10 @@
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from src.model.loader import loader
-from src.data.db_utils import init_logs_db, log_prediction
+from src.database.db_utils import init_logs_db, log_prediction
 import os
 import logging
 import time
-import pandas as pd
 
 # Configuration du logging
 logging.basicConfig(
@@ -71,93 +70,82 @@ def health_check():
 
 
 @app.get("/predict/{client_id}", response_model=PredictionResponse)
-def predict(client_id: int):
+async def predict(client_id: int):
+    """Calcule le score de crédit pour un client (avec cache LRU)."""
     start_time = time.time()
-    model = loader.model
-
-    if model is None:
-        raise HTTPException(status_code=500, detail="Modèle non disponible")
-
-    # Récupération des données du client via SQLite
-    client_data = loader.get_client_data(client_id)
-
-    if client_data is None:
-        raise HTTPException(status_code=404, detail=f"Client {client_id} non trouvé")
-
-    # Préparation des features (on retire TARGET si présent et SK_ID_CURR)
-    features = client_data.drop(columns=["TARGET", "SK_ID_CURR"], errors="ignore")
-    features = clean_feature_names(features)
-
-    # Prédiction de probabilité (classe 1 = défaut)
     try:
-        # LightGBM/Scikit-learn predict_proba
-        prob = model.predict_proba(features)[0][1]
-    except Exception:
-        # Fallback si le modèle n'a pas predict_proba ou autre erreur
-        try:
-            prob = model.predict(features)[0]
-        except Exception as e2:
-            raise HTTPException(status_code=500, detail=f"Erreur de prédiction : {e2}")
+        # 1. Récupération des données (via loader qui gère SQLite)
+        client_data = loader.get_client_data(client_id)
+        if client_data is None:
+            raise HTTPException(
+                status_code=404, detail=f"Client {client_id} non trouvé dans la base."
+            )
 
-    # Calcul des valeurs SHAP
-    shap_data = {}
-    base_val = 0.0
-    try:
-        explanation = loader.get_shap_values(features)
-        if explanation is not None:
-            # On récupère les valeurs pour la classe 1 (défaut)
-            vals = explanation.values[0]
-            # base_values peut être un scalaire ou un tableau
-            bv = explanation.base_values
-            if isinstance(bv, (list, pd.Series, pd.Index)) or hasattr(bv, "__len__"):
-                base_val = float(bv[0])
-                if len(vals.shape) > 1:
-                    vals = vals[:, 1]
-                    base_val = float(bv[0][1])
-            else:
-                base_val = float(bv)
+        # 2. Prédiction (via loader qui gère ONNX + Cache)
+        score = loader.predict_proba(client_id)
+        if score is None:
+            raise HTTPException(status_code=500, detail="Modèle non disponible")
 
-            # Création d'un dictionnaire feature: value
-            feature_names = features.columns.tolist()
-            full_shap = dict(zip(feature_names, vals))
+        # Seuil de décision (Standard Projet 7)
+        threshold = 0.5
+        decision = "Accepté" if score < threshold else "Refusé"
 
-            # On ne garde que les 10 plus importantes (en valeur absolue)
-            sorted_shap = sorted(
-                full_shap.items(), key=lambda x: abs(x[1]), reverse=True
-            )[:10]
-            shap_data = dict(sorted_shap)
-    except Exception as e:
-        logger.error(f"Erreur lors du calcul SHAP dans l'API : {e}")
-        shap_data = {"error": 0.0}
+        # 3. Explicabilité SHAP (via loader qui gère Cache)
+        shap_values = loader.get_shap_values_cached(client_id)
 
-    decision = "Refusé" if prob > DEFAULT_THRESHOLD else "Accordé"
+        # Extraction des features importance locales
+        features_list = client_data.drop(
+            columns=["TARGET", "SK_ID_CURR"], errors="ignore"
+        ).columns.tolist()
 
-    latency = time.time() - start_time
+        # Formater les SHAP values pour le dashboard
+        # On prend les 10 plus importantes (valeur absolue)
+        importances = []
+        if shap_values is not None:
+            # shap_values.values est un array (n_samples, n_features) ou (n_samples, n_features, n_classes)
+            # Pour TreeExplainer sur LGBMBinary, c'est souvent (n_features,) pour un sample
+            vals = (
+                shap_values.values[0]
+                if len(shap_values.values.shape) > 1
+                else shap_values.values
+            )
 
-    try:
+            for i, feat in enumerate(features_list):
+                importances.append({"feature": feat, "shap_value": float(vals[i])})
+
+            # Trier par importance absolue
+            importances = sorted(
+                importances, key=lambda x: abs(x["shap_value"]), reverse=True
+            )[:15]
+
+        execution_time = time.time() - start_time
+
+        # 4. Logging en base SQLite pour monitoring
         log_prediction(
-            loader.db_path,
-            client_id,
-            float(prob),
-            decision,
-            features.iloc[0],
-            latency=latency,
+            db_path=loader.db_path,
+            client_id=client_id,
+            score=float(score),
+            decision=decision,
+            features=client_data.iloc[0].to_dict(),
+            latency=execution_time,
         )
+
+        return {
+            "client_id": client_id,
+            "score": float(score),
+            "decision": decision,
+            "threshold": threshold,
+            "shap_values": {imp["feature"]: imp["shap_value"] for imp in importances},
+            "base_value": (
+                float(shap_values.base_values[0]) if shap_values is not None else 0.0
+            ),
+        }
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Erreur lors du logging en base : {e}")
-
-    logger.info(
-        f"Prediction for Client {client_id}: Score={prob:.4f}, Decision={decision}"
-    )
-
-    return PredictionResponse(
-        client_id=client_id,
-        score=float(prob),
-        decision=decision,
-        threshold=DEFAULT_THRESHOLD,
-        shap_values=shap_data,
-        base_value=base_val,
-    )
+        logger.error(f"Erreur de prédiction pour client {client_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur de prédiction: {str(e)}")
 
 
 if __name__ == "__main__":

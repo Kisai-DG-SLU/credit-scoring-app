@@ -24,8 +24,21 @@ def client():
 
 @pytest.fixture
 def mock_loader():
-    """Fixture pour mocker le ModelLoader."""
+    """Fixture pour mocker le ModelLoader avec comportements par défaut."""
     with patch("src.api.main.loader") as mock:
+        # Mock SHAP par défaut pour éviter les crashes dans predict()
+        shap_mock = MagicMock()
+        # On simule un tableau (1, N) pour 1 sample
+        shap_mock.values = np.array([[0.01] * 200])
+        shap_mock.base_values = np.array([0.5])
+        mock.get_shap_values_cached.return_value = shap_mock
+        yield mock
+
+
+@pytest.fixture(autouse=True)
+def mock_log_prediction():
+    """Fixture automatique pour mocker log_prediction (évite l'accès SQLite)."""
+    with patch("src.api.main.log_prediction") as mock:
         yield mock
 
 

@@ -2,7 +2,7 @@ import pandas as pd
 import sqlite3
 import os
 import time
-from src.data.db_utils import init_logs_db
+from src.database.db_utils import init_logs_db
 
 
 def create_lite_sqlite(csv_path, db_path, table_name="clients", sample_size=3000):

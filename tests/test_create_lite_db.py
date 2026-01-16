@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import pandas as pd
-from src.data.create_lite_db import create_lite_sqlite
+from src.database.create_lite_db import create_lite_sqlite
 
 
 def test_create_lite_sqlite(tmp_path):
@@ -43,3 +43,15 @@ def test_create_lite_sqlite_missing_file():
     # Vérifie que le script gère l'absence de fichier CSV sans crasher
     create_lite_sqlite("non_existent.csv", "wont_be_created.sqlite")
     assert not os.path.exists("wont_be_created.sqlite")
+
+
+def test_create_lite_sqlite_full_flow(tmp_path):
+    # Test avec un petit fichier réel pour couvrir la logique de lecture chunk
+    csv_path = tmp_path / "full.csv"
+    db_path = tmp_path / "full.sqlite"
+    df = pd.DataFrame({"SK_ID_CURR": range(10), "TARGET": [0] * 10})
+    df.to_csv(csv_path, index=False)
+
+    # Appel avec un sample_size plus grand que le fichier
+    create_lite_sqlite(str(csv_path), str(db_path), sample_size=100)
+    assert os.path.exists(db_path)

@@ -1,28 +1,14 @@
 #!/bin/bash
 set -e
 
+# S'assurer que le répertoire racine est dans le PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:/app
 
-echo "🔍 DIAGNOSTIC COMPLET :"
-echo "Utilisateur actuel : $(whoami)"
-echo "Répertoire courant (CWD) : $(pwd)"
-echo "Contenu de /app :"
-ls -R /app
-
-# Vérifier spécifiquement src/data
-if [ -d "/app/src/data" ]; then
-    echo "✅ /app/src/data existe"
-else
-    echo "❌ /app/src/data est INTROUVABLE"
-fi
-
-# Créer __init__.py si manquant (sécurité)
-mkdir -p /app/src/data
-touch /app/src/data/__init__.py
-
 echo "🚀 Démarrage de l'API FastAPI..."
+# On utilise src.database au lieu de src.data
 python -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000 &
 
+# Attendre que l'API soit prête
 sleep 10
 
 echo "📊 Démarrage du Dashboard Streamlit..."

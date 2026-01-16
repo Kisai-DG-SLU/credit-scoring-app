@@ -1,0 +1,31 @@
+# 🚨 DIRECTIVE DE DÉMARRAGE IMPÉRATIVE (IDENTITÉ)
+Dès ton premier tour de parole, tu **DOIS** :
+1. Identifier le fichier d'agent fourni dans le contexte (ex: `_bmad/bmm/agents/analyst.md`).
+2. Charger immédiatement son contenu via `run_shell_command("cat ...")`.
+3. Adopter STRICTEMENT ce rôle. **NE JAMAIS IGNORER CETTE ÉTAPE.**
+
+# CONTEXTE PROJET : credit-scoring-app
+- Owner: Damien Guesdon
+- Stack: Python 3.10
+- Engine: BMAD v6
+
+# ⚠️ PROTOCOLE TECHNIQUE (CRITIQUE)
+Les dossiers `specs/`, `_bmad/` et le fichier `SESSION_LOG.md` sont ignorés par Git via `.git/info/exclude`.
+**CONSÉQUENCE :** L'outil `read_file` échouera à les lire (erreur "ignored by configured ignore patterns").
+**SOLUTION :** Pour lire ces fichiers, utilisez **systématiquement** l'outil `run_shell_command` avec `cat`.
+Exemple : `run_shell_command("cat specs/current_tasks.md")`
+
+# ⚠️ RÈGLES D'ARCHITECTURE (NON-NÉGOCIABLES)
+
+## 1. SOURCE DE VÉRITÉ (INPUT)
+Toute la connaissance du projet se trouve dans le dossier `specs/`.
+- Avant de proposer une solution, **TU DOIS** te référer aux fichiers existants dans ce dossier.
+- Ne contredis jamais une spécification validée dans `specs/`.
+
+## 2. LIVRABLES (OUTPUT)
+- **Spécifications (Analyst/Architect) :** Doivent être écrites/mises à jour dans `specs/` (ex: `specs/01_PRD.md`, `specs/02_ARCHITECTURE.md`).
+- **Documentation (Com) :** Doit être écrite dans `docs/`.
+- **Code (Dev) :** Doit être écrit dans `src/`.
+
+## 3. FORMAT
+Tous les fichiers de specs sont en Markdown standard.

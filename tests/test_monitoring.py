@@ -76,3 +76,32 @@ def test_generate_drift_report(monitoring_db):
     # Nettoyage
     if os.path.exists(output_path):
         os.remove(output_path)
+
+
+def test_generate_drift_report_sql_error(monitoring_db):
+    """Vérifie la gestion d'erreur SQL (ex: table manquante)."""
+    conn = sqlite3.connect(monitoring_db)
+    conn.execute("DROP TABLE clients")
+    conn.commit()
+    conn.close()
+
+    result = generate_drift_report(monitoring_db)
+    assert result is None
+
+
+def test_generate_drift_report_logs_error(monitoring_db):
+    """Vérifie la gestion d'erreur lors de la lecture des logs."""
+    conn = sqlite3.connect(monitoring_db)
+    conn.execute("DROP TABLE prediction_logs")
+    conn.commit()
+    conn.close()
+
+    result = generate_drift_report(monitoring_db)
+    assert result is None
+
+
+def test_generate_drift_report_no_common_features(monitoring_db):
+    """Vérifie le comportement si aucune feature commune n'est trouvée."""
+    # features=[...] avec des noms qui n'existent pas
+    result = generate_drift_report(monitoring_db, features=["UNKNOWN_FEATURE"])
+    assert result is None

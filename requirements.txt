@@ -20,3 +20,8 @@ streamlit
 
 # Monitoring
 evidently
+
+# Optimisation & Inférence
+onnxruntime
+skl2onnx
+onnxmltools

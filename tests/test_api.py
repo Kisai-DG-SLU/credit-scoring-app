@@ -15,6 +15,7 @@ def test_predict_valid_client(client, mock_loader, mock_model):
     """Cas nominal : client existant et données complètes."""
     # Setup mock
     mock_loader.model = mock_model
+    mock_loader.predict_proba.return_value = 0.7
     mock_loader.get_client_data.return_value = create_client_features(
         {"SK_ID_CURR": 123}
     )
@@ -40,6 +41,7 @@ def test_predict_client_not_found(client, mock_loader):
 def test_predict_missing_values(client, mock_loader, mock_model):
     """T005 : Test avec valeurs manquantes (AMT_ANNUITY est NULL)."""
     mock_loader.model = mock_model
+    mock_loader.predict_proba.return_value = 0.3
     # Simulation d'une valeur manquante qui devient NaN après conversion numérique
     features = create_client_features({"AMT_ANNUITY": np.nan})
     mock_loader.get_client_data.return_value = features
@@ -54,6 +56,7 @@ def test_predict_missing_values(client, mock_loader, mock_model):
 def test_predict_aberrant_values(client, mock_loader, mock_model):
     """T005 : Test avec valeurs aberrantes (DAYS_BIRTH > 0)."""
     mock_loader.model = mock_model
+    mock_loader.predict_proba.return_value = 0.8
     # Un âge positif en jours est aberrant dans ce dataset (attendu négatif)
     features = create_client_features({"DAYS_BIRTH": 1000})
     mock_loader.get_client_data.return_value = features
@@ -67,8 +70,7 @@ def test_predict_aberrant_values(client, mock_loader, mock_model):
 def test_predict_model_error(client, mock_loader, mock_model):
     """Vérifie la gestion d'erreur si le modèle échoue."""
     mock_loader.model = mock_model
-    mock_model.predict_proba.side_effect = Exception("Model inference failed")
-    mock_model.predict.side_effect = Exception("Model inference failed")
+    mock_loader.predict_proba.side_effect = Exception("Model inference failed")
 
     mock_loader.get_client_data.return_value = create_client_features()
 
@@ -79,10 +81,56 @@ def test_predict_model_error(client, mock_loader, mock_model):
 
 def test_predict_no_model(client, mock_loader):
     """Vérifie l'erreur si le modèle n'est pas chargé."""
-    # Forcer loader.model à être None
-    # Note: On doit mocker la propriété. C'est plus simple de mocker ModelLoader.model directement.
-    type(mock_loader).model = property(lambda x: None)
+    mock_loader.predict_proba.return_value = None
 
     response = client.get("/predict/123")
     assert response.status_code == 500
     assert "Modèle non disponible" in response.json()["detail"]
+
+
+def test_predict_invalid_type(client):
+    """T046 : Vérifie que l'API rejette un ID de type chaîne de caractères."""
+    response = client.get("/predict/abc")
+    assert response.status_code == 422
+
+
+def test_predict_float_id(client):
+    """T046 : Vérifie que l'API rejette un ID de type flottant."""
+    response = client.get("/predict/123.45")
+    assert response.status_code == 422
+
+
+def test_predict_negative_id(client, mock_loader):
+    """T046 : Vérifie le comportement avec un ID négatif (hors plage logique)."""
+    mock_loader.get_client_data.return_value = None
+    response = client.get("/predict/-1")
+    # FastAPI accepte l'entier négatif, mais le loader ne le trouvera pas
+    assert response.status_code == 404
+
+
+def test_predict_very_large_id(client, mock_loader):
+    """T046 : Vérifie le comportement avec un ID très grand."""
+    mock_loader.get_client_data.return_value = None
+    # Test avec un ID dépassant les entiers standards
+    response = client.get("/predict/999999999999999999")
+    assert response.status_code == 404
+
+
+def test_predict_zero_id(client, mock_loader):
+    """T046 : Vérifie le comportement avec un ID égal à zéro."""
+    mock_loader.get_client_data.return_value = None
+    response = client.get("/predict/0")
+    assert response.status_code == 404
+
+
+def test_predict_infinite_feature(client, mock_loader, mock_model):
+    """T046 : Vérifie que l'API gère les valeurs infinies dans les features."""
+    mock_loader.model = mock_model
+    mock_loader.predict_proba.return_value = 0.5
+    # Simulation d'une valeur infinie (hors plage standard)
+    features = create_client_features({"AMT_INCOME_TOTAL": np.inf})
+    mock_loader.get_client_data.return_value = features
+
+    response = client.get("/predict/123")
+    assert response.status_code == 200
+    assert "score" in response.json()

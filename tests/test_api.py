@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock
 import numpy as np
+import pandas as pd
 from tests.conftest import create_client_features
 
 
@@ -134,3 +135,12 @@ def test_predict_infinite_feature(client, mock_loader, mock_model):
     response = client.get("/predict/123")
     assert response.status_code == 200
     assert "score" in response.json()
+
+
+def test_clean_feature_names():
+    """Vérifie le nettoyage des noms de colonnes."""
+    from src.api.main import clean_feature_names
+
+    df = pd.DataFrame({"Feature (Name)!": [1]})
+    df_clean = clean_feature_names(df)
+    assert "Feature__Name__" in df_clean.columns

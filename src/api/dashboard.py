@@ -148,6 +148,21 @@ with tab_monitoring:
 
         if not df_logs.empty:
             df_logs["timestamp"] = pd.to_datetime(df_logs["timestamp"])
+            n_logs = len(df_logs)
+
+            # --- INDICATEUR DE CONFIANCE (T041) ---
+            if n_logs < 100:
+                st.warning(
+                    f"⚠️ **Confiance Faible ({n_logs} appels)** : Volume insuffisant pour une analyse statistique fiable."
+                )
+            elif n_logs < 500:
+                st.info(
+                    f"📊 **Confiance Modérée ({n_logs} appels)** : Les tendances commencent à être significatives."
+                )
+            else:
+                st.success(
+                    f"✅ **Confiance Élevée ({n_logs} appels)** : Analyse statistiquement robuste."
+                )
 
             col_stat1, col_stat2 = st.columns(2)
 

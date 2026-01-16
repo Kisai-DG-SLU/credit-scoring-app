@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import pytest
-from src.data.db_utils import init_logs_db, log_prediction
+from src.database.db_utils import init_logs_db, log_prediction
 
 DB_PATH = "test_logs.sqlite"
 
@@ -71,4 +71,23 @@ def test_log_prediction(db_connection):
     assert row[2] == 0.85
     assert row[3] == "Refusé"
     # Vérifie une feature
-    # Il faudra ajuster l'index selon le schéma exact, mais pour l'instant on vérifie juste que ça a marché
+    # Il faudra ajuster l'index selon le schéma exact, mais pour l'instant on vérifie juste que ça ne crashe pas.
+
+
+def test_log_prediction_missing_features(db_connection):
+    """Vérifie log_prediction avec des features manquantes ou invalides."""
+    db_connection.close()
+    init_logs_db(DB_PATH)
+
+    # Dictionnaire vide
+    log_prediction(DB_PATH, 124, 0.1, "Accordé", features={})
+
+    # Avec des valeurs non numériques
+    log_prediction(DB_PATH, 125, 0.1, "Accordé", features={"EXT_SOURCE_1": "invalid"})
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM prediction_logs WHERE client_id=125")
+    row = cursor.fetchone()
+    conn.close()
+    assert row is not None

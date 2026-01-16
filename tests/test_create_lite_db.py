@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import pandas as pd
-from src.data.create_lite_db import create_lite_sqlite
+from src.database.create_lite_db import create_lite_sqlite
 
 
 def test_create_lite_sqlite(tmp_path):

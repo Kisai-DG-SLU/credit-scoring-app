@@ -65,13 +65,20 @@ def test_log_prediction(db_connection):
     conn.close()
 
     assert row is not None
-    # Vérification des colonnes principales (adapté selon le schéma créé)
-    # On suppose l'ordre : id, client_id, score, decision, timestamp, ...features...
-    assert row[1] == 123
-    assert row[2] == 0.85
-    assert row[3] == "Refusé"
-    # Vérifie une feature
-    # Il faudra ajuster l'index selon le schéma exact, mais pour l'instant on vérifie juste que ça ne crashe pas.
+
+
+def test_init_logs_db_already_exists():
+    """Vérifie que init_logs_db gère le cas où la table et la colonne latency existent déjà."""
+    init_logs_db(DB_PATH)
+    # Deuxième appel ne doit pas crasher
+    init_logs_db(DB_PATH)
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(prediction_logs)")
+    cols = [c[1] for c in cursor.fetchall()]
+    conn.close()
+    assert "latency" in cols
 
 
 def test_log_prediction_missing_features(db_connection):

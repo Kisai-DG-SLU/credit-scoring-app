@@ -1,0 +1,19 @@
+BENCHMARK REPORT: RESOURCE USAGE & INFERENCE TIME
+=================================================
+
+SCENARIO A: ONNX (Optimized)
+Average Latency: 0.03 ms
+P95 Latency:     0.05 ms
+Throughput:      31983.65 req/sec
+Avg CPU Usage:   0.0%
+Peak RAM Usage:  311.4 MB
+
+SCENARIO B: JOBLIB (Baseline)
+Average Latency: 3.39 ms
+P95 Latency:     4.02 ms
+Throughput:      294.40 req/sec
+Avg CPU Usage:   0.0%
+Peak RAM Usage:  288.6 MB
+
+CONCLUSION: ONNX is 114.5x faster than standard Joblib.
+Note: GPU usage is 0% as inference runs on CPU (optimized for low-cost env).

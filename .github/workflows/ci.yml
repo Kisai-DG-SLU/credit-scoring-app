@@ -7,6 +7,7 @@ on:
       - 'feat/*'
       - 'fix/*'
       - 'docs/*'
+      - 'tmp/*'
 
 
 permissions:

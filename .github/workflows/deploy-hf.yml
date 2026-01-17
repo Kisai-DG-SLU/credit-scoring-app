@@ -25,7 +25,7 @@ jobs:
           git lfs install
           # On crée un dossier propre avec seulement ce qui est nécessaire
           mkdir deploy_dir
-          rsync -av --exclude='.git' --exclude='.venv' --exclude='data' --exclude='__pycache__' . deploy_dir/
+          rsync -av --exclude='.git' --exclude='.venv' --exclude='data' --exclude='__pycache__' --exclude='delivery' . deploy_dir/
           # Include lite database manually as data/ was excluded
           mkdir -p deploy_dir/data
           cp data/database_lite.sqlite deploy_dir/data/

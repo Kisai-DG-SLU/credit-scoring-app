@@ -140,3 +140,5 @@ L'application répond aux exigences critiques de la mission :
 
 **Damien Guesdon**
 *Projet réalisé dans le cadre de la formation Data Scientist.*
+
+# commit mineur

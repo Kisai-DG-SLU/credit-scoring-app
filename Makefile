@@ -18,7 +18,7 @@ format: rotate-logs
 	ruff check . --fix
 
 test: rotate-logs
-	pytest --cov=src --cov-report=term-missing --cov-report=html
+	pixi run pytest --cov=src --cov-report=term-missing --cov-report=html
 
 # --- Execution ---
 run-api: rotate-logs
@@ -33,5 +33,5 @@ docker-run:
 
 # --- Cleanup ---
 clean:
-	rm -rf __pycache__ .pytest_cache .ruff_cache coverage.html
+	rm -rf __pycache__ .pixi run pytest_cache .ruff_cache coverage.html
 	find . -type d -name "__pycache__" -exec rm -rf {} +

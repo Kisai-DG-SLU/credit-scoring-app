@@ -5,26 +5,13 @@ __pycache__/
 .DS_Store
 .coverage
 htmlcov/
-coverage.xml
-# Data artifacts (Ignore heavy files, allow lite DB)
-data/*
-!data/database_lite.sqlite
-!data/.gitkeep
-
+pixi.lock
+.pixi/
+data/
 _bmad-output/
 
-# Python virtual environments
-.venv/
-venv/
-env/
-
-# Build artifacts
-dist/
-build/
-*.egg-info/
-
-# Tool caches
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.ipynb_checkpoints/
+.venv_conda
+venv
+.venv
+__pycache__
+.ipynb_checkpoints
